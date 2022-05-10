@@ -18,7 +18,18 @@ router
     // console.log("The form data: ", req.body);
 
   const { username, email, password } = req.body;
+  /*
+  if(!username || !email || !password) {
+    res.render("auth/login", {errorMessage: "All fields required"})
+    return
+  } // After this line I know I have username, email and password that are not "undefined"
 
+  const regex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/
+  if(regex.test(password)){
+    res.render("auth/login", {errorMessage: "Password must follow guidelines"})
+    return
+  }
+  */
   bcrypt
     .genSalt(saltRounds)
     .then((salt) => bcrypt.hash(password, salt))
@@ -31,13 +42,14 @@ router
         //     ^
         //     |            |--> this is placeholder (how we named returning value from the previous method (.hash()))
         passwordHash: hashedPassword,
-      });
+      })
     })
     .then((userFromDB) => {
       // console.log("Newly created user is: ", userFromDB);
       res.redirect("/");
     })
-    .catch((error) => next(error));
+    .catch((err) => res.status(500).render("auth/signup", { errorMessage: err.message }))    
+    .catch((err) => next(err));
 });
 
 router
@@ -54,7 +66,7 @@ router
         } else {
           if (bcrypt.compareSync(password, user.passwordHash)) {
             req.session.currentUser = user;
-            res.redirect("/"); // redirect to wherever you want
+            res.redirect("/userProfile"); // redirect to wherever you want
             return;
           } else {
             res.render("auth/login", { errorMessage: "Wrong credentials!" });
@@ -64,6 +76,5 @@ router
       .catch((err) => console.log(err));
   });
 
-router.get("/userProfile", (req, res) => res.render("users/user-profile"));
 
 module.exports = router;
